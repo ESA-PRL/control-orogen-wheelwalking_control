@@ -34,14 +34,17 @@ bool Task::configureHook()
 
     joint_commands_names = _joint_commands_names.get();
     joint_readings_names = _joint_readings_names.get();
-
+    last_position_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
+    last_velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
+    first_iteration=true;
+ 
     return true;
 }
 bool Task::startHook()
 {
     if (! TaskBase::startHook())
         return false;
-    return true;
+   return true;
 }
 void Task::updateHook()
 {
@@ -69,13 +72,24 @@ void Task::updateHook()
         wheelwalking_control->getJointCommands(position_commands, velocity_commands);
     }
 
-    base::commands::Joints joint_commands = assembleJointCommands(position_commands, velocity_commands);
-
-    _joint_commands.write(joint_commands);
+    if (position_commands != last_position_commands || velocity_commands != last_velocity_commands)
+    {
+        //std::cout << "Wheel Walking Control: Update Hook: New command sent to joint dispatcher" << std::endl;
+        base::commands::Joints joint_commands = assembleJointCommands(position_commands, velocity_commands);
+        _joint_commands.write(joint_commands);
+        last_position_commands=position_commands;
+        last_velocity_commands=velocity_commands;
+    }
 }
 
 void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_commands)
 {
+    if (first_iteration)
+    {
+        last_button_values = joystick_commands.buttons.elements;
+        last_axes_values = joystick_commands.axes.elements;
+        first_iteration=false;
+    }
     if (joystick_commands.buttons[5] == 1 && last_button_values[5] == 0)    //BTN_Z (right bottom)
     {
         kill_switch = !kill_switch;
@@ -87,7 +101,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
     }
     if (joystick_commands.buttons[7] == 1 && last_button_values[7] == 0)    //BTN_TR (right top)
         wheelwalking_control->selectNextGait();
-    if (joystick_commands.axes[5] == 1 && last_axes_values[5] == 0 && constant_speed_mode)     //ABS_HAT0Y (dpad)
+    if (joystick_commands.axes[1] == 1 && last_axes_values[1] == 0 && constant_speed_mode)     //ABS_HAT0Y (dpad)
     {
         if (constant_speed <= MAX_SPEED - 0.01d)
         {
@@ -95,7 +109,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
             std::cout << "Set speed to " << constant_speed << " m/s." << std::endl;
         }
     }
-    if (joystick_commands.axes[5] == -1 && last_axes_values[5] == 0 && constant_speed_mode)     //ABS_HAT0Y (dpad)
+    if (joystick_commands.axes[1] == -1 && last_axes_values[1] == 0 && constant_speed_mode)     //ABS_HAT0Y (dpad)
     {
         if (constant_speed >= 0.01d)
         {
@@ -120,7 +134,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
     if (constant_speed_mode)
         wheelwalking_control->setSpeed(constant_speed);
     else
-        wheelwalking_control->setSpeed(joystick_commands.axes[1] < 0.0d ? 0.0d : joystick_commands.axes[1] * MAX_SPEED);   //ABS_Y (left analog) - sign might have to be switched!!
+        wheelwalking_control->setSpeed(joystick_commands.axes[5] < 0.0d ? 0.0d : joystick_commands.axes[5] * MAX_SPEED);   //ABS_Y (left analog) - sign might have to be switched!!
 
     last_button_values = joystick_commands.buttons.elements;
     last_axes_values = joystick_commands.axes.elements;

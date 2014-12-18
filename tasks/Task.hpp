@@ -34,8 +34,11 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
     protected:
         ExoterWheelwalkingControl* wheelwalking_control;
     private:
+        bool first_iteration;
         std::vector<int> last_button_values;
         std::vector<double> last_axes_values;
+        std::vector<double> last_position_commands;
+        std::vector<double> last_velocity_commands;
         std::vector<std::string> joint_commands_names;
         std::vector<std::string> joint_readings_names;
         bool deadmans_switch;
