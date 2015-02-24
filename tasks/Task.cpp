@@ -111,7 +111,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
     }
     if (joystick_commands.axes[1] == -1 && last_axes_values[1] == 0 && constant_speed_mode)     //ABS_HAT0Y (dpad)
     {
-        if (constant_speed >= 0.01d)
+        if (constant_speed >= -MAX_SPEED + 0.01d)
         {
             constant_speed -= 0.01d;
             std::cout << "Set speed to " << constant_speed << " m/s." << std::endl;
@@ -134,7 +134,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
     if (constant_speed_mode)
         wheelwalking_control->setSpeed(constant_speed);
     else
-        wheelwalking_control->setSpeed(joystick_commands.axes[5] < 0.0d ? 0.0d : joystick_commands.axes[5] * MAX_SPEED);   //ABS_Y (left analog) - sign might have to be switched!!
+        wheelwalking_control->setSpeed(joystick_commands.axes[5] * MAX_SPEED);   //ABS_Y (left analog) - sign might have to be switched!!
 
     last_button_values = joystick_commands.buttons.elements;
     last_axes_values = joystick_commands.axes.elements;
