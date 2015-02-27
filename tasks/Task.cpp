@@ -7,13 +7,13 @@ using namespace wheelwalking_control;
 using namespace exoter;
 
 Task::Task(std::string const& name)
-    : TaskBase(name), deadmans_switch(true), kill_switch(false), discrete_speed_mode(true), discrete_speed(0), offset_speed(0), step_length(2)
+    : TaskBase(name), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(0), offset_speed(0), step_length(2)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
-    : TaskBase(name, engine), deadmans_switch(true), kill_switch(false), discrete_speed_mode(true), discrete_speed(0), offset_speed(0), step_length(2)
+    : TaskBase(name, engine), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(0), offset_speed(0), step_length(2)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
@@ -37,7 +37,16 @@ bool Task::configureHook()
     last_position_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
     last_velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
     first_iteration=true;
- 
+
+    wheelwalking_control->selectMode(AXLE_BY_AXLE);
+
+    std::cout << "Initial gait: AXLE_BY_AXLE" << std::endl;
+    std::cout << "Discrete speed mode " << (discrete_speed_mode ? "enabled." : "disabled.") << std::endl;
+    std::cout << "Discrete speed: " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s" << std::endl;
+    std::cout << "Offset speed: " << offset_speed * OFFSET_SPEED_FACTOR << " m/s" << std::endl;
+    std::cout << "Step length: " << step_length * STEP_LENGTH_FACTOR << " m" << std::endl;
+    std::cout << "Kill switch " << (kill_switch ? "engaged." : "disengaged.") << std::endl;
+
     return true;
 }
 bool Task::startHook()
