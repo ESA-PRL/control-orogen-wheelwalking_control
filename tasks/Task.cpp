@@ -7,13 +7,13 @@ using namespace wheelwalking_control;
 using namespace exoter;
 
 Task::Task(std::string const& name)
-    : TaskBase(name), deadmans_switch(true), kill_switch(false), constant_speed_mode(false), constant_speed(0.0d), MAX_SPEED(0.03d)
+    : TaskBase(name), deadmans_switch(true), kill_switch(false), discrete_speed_mode(true), discrete_speed(0), MAX_SPEED(0.03d)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
-    : TaskBase(name, engine), deadmans_switch(true), kill_switch(false), constant_speed_mode(false), constant_speed(0.0d), MAX_SPEED(0.03d)
+    : TaskBase(name, engine), deadmans_switch(true), kill_switch(false), discrete_speed_mode(true), discrete_speed(0), MAX_SPEED(0.03d)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
@@ -88,7 +88,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
     {
         last_button_values = joystick_commands.buttons.elements;
         last_axes_values = joystick_commands.axes.elements;
-        first_iteration=false;
+        first_iteration = false;
     }
     if (joystick_commands.buttons[7] == 1 && last_button_values[7] == 0)    //BTN_Z (right bottom)
     {
@@ -101,44 +101,44 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
     }
     if (joystick_commands.buttons[5] == 1 && last_button_values[5] == 0)    //BTN_TR (right topi)
     {
-        wheelwalking_control->selectNextGait();
-	constant_speed = 0.0d;
-        std::cout << "Set speed to " << constant_speed << " m/s." << std::endl;
+       discrete_speed = 0;
+       std::cout << "Set speed to " << discrete_speed * 0.005d << " m/s." << std::endl;
+       wheelwalking_control->selectNextGait();
     }
-    if (joystick_commands.axes[5] == 1 && last_axes_values[5] == 0 && constant_speed_mode)     //ABS_HAT0Y (dpad)
+    if (joystick_commands.axes[5] == 1 && last_axes_values[5] == 0 && discrete_speed_mode)     //ABS_HAT0Y (dpad)
     {
-        if (constant_speed <= MAX_SPEED - 0.01d)
+        if ((discrete_speed + 1) * 0.005d <= MAX_SPEED)
         {
-            constant_speed += 0.01d;
-            std::cout << "Set speed to " << constant_speed << " m/s." << std::endl;
+            discrete_speed++;
+            std::cout << "Set speed to " << discrete_speed * 0.005d << " m/s." << std::endl;
         }
     }
-    if (joystick_commands.axes[5] == -1 && last_axes_values[5] == 0 && constant_speed_mode)     //ABS_HAT0Y (dpad)
+    if (joystick_commands.axes[5] == -1 && last_axes_values[5] == 0 && discrete_speed_mode)     //ABS_HAT0Y (dpad)
     {
-        if (constant_speed >= -MAX_SPEED + 0.01d)
+        if ((discrete_speed - 1) * 0.005d >= -MAX_SPEED)
         {
-            constant_speed -= 0.01d;
-            std::cout << "Set speed to " << constant_speed << " m/s." << std::endl;
+            discrete_speed--;
+            std::cout << "Set speed to " << discrete_speed * 0.005d << " m/s." << std::endl;
         }
     }
     if (joystick_commands.buttons[10] == 1 && last_button_values[10] == 0)    //BTN_SELECT (left push button)
     {
-        if (!constant_speed_mode)
+        if (!discrete_speed_mode)
         {
-            constant_speed_mode = true;
-	    constant_speed = 0.0d;
+            discrete_speed_mode = true;
+	    discrete_speed = 0;
             std::cout << "Switched to discrete speed mode." << std::endl;
-            std::cout << "Set speed to " << constant_speed << " m/s." << std::endl; 
+            std::cout << "Set speed to " << discrete_speed * 0.005d << " m/s." << std::endl; 
         }
         else
         {
-            constant_speed_mode = false;
+            discrete_speed_mode = false;
             std::cout << "Switched to continuous speed mode." << std::endl;
         }
     }
 
-    if (constant_speed_mode)
-        wheelwalking_control->setSpeed(constant_speed);
+    if (discrete_speed_mode)
+        wheelwalking_control->setSpeed(discrete_speed * 0.005d);
     else
         wheelwalking_control->setSpeed(joystick_commands.axes[1] * MAX_SPEED);   //ABS_Y (left analog) - sign might have to be switched!!
 

@@ -43,8 +43,8 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
         std::vector<std::string> joint_readings_names;
         bool deadmans_switch;
         bool kill_switch;
-        bool constant_speed_mode;
-        double constant_speed;
+        bool discrete_speed_mode;
+        int discrete_speed; // constant speed in multiples of 0.005 m/s
 
         const double MAX_SPEED; // Maximum speed in body x-direction in m/s.
 
