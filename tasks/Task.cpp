@@ -7,13 +7,13 @@ using namespace wheelwalking_control;
 using namespace exoter;
 
 Task::Task(std::string const& name)
-    : TaskBase(name), deadmans_switch(true), kill_switch(false), discrete_speed_mode(true), discrete_speed(0), MAX_SPEED(0.03d)
+    : TaskBase(name), deadmans_switch(true), kill_switch(false), discrete_speed_mode(true), discrete_speed(0), offset_speed(0), step_length(2)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
-    : TaskBase(name, engine), deadmans_switch(true), kill_switch(false), discrete_speed_mode(true), discrete_speed(0), MAX_SPEED(0.03d)
+    : TaskBase(name, engine), deadmans_switch(true), kill_switch(false), discrete_speed_mode(true), discrete_speed(0), offset_speed(0), step_length(2)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
@@ -90,7 +90,8 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         last_axes_values = joystick_commands.axes.elements;
         first_iteration = false;
     }
-    if (joystick_commands.buttons[7] == 1 && last_button_values[7] == 0)    //BTN_Z (right bottom)
+
+    if (joystick_commands.buttons[6] == 1 && last_button_values[6] == 0)    //BTN_TL (left bottom)
     {
         kill_switch = !kill_switch;
 
@@ -99,48 +100,86 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         else
             std::cout << "Kill switch disengaged." << std::endl;
     }
-    if (joystick_commands.buttons[5] == 1 && last_button_values[5] == 0)    //BTN_TR (right topi)
+
+    if (joystick_commands.buttons[7] == 1 && last_button_values[7] == 0)    //BTN_TR (right bottom)
     {
-       discrete_speed = 0;
-       std::cout << "Set speed to " << discrete_speed * 0.005d << " m/s." << std::endl;
        wheelwalking_control->selectNextGait();
     }
+
+    if (joystick_commands.buttons[5] == 1 && last_button_values[5] == 0) //BTN_Z (right top)
+    {
+        if ((step_length + 1) * STEP_LENGTH_FACTOR <= MAX_STEP_LENGTH)
+        {
+            step_length++;
+            std::cout << "Set step length to " << step_length * STEP_LENGTH_FACTOR << " m." << std::endl;
+        }
+    }
+    else if (joystick_commands.buttons[4] == 1 && last_button_values[4] == 0) //BTN_Y (left top)
+    {
+        if ((step_length - 1) * STEP_LENGTH_FACTOR >= MIN_STEP_LENGTH)
+        {
+            step_length--;
+            std::cout << "Set step length to " << step_length * STEP_LENGTH_FACTOR << " m." << std::endl;
+        }
+    }
+
     if (joystick_commands.axes[5] == 1 && last_axes_values[5] == 0 && discrete_speed_mode)     //ABS_HAT0Y (dpad)
     {
-        if ((discrete_speed + 1) * 0.005d <= MAX_SPEED)
+        if ((discrete_speed + 1) * DISCRETE_SPEED_FACTOR <= MAX_SPEED)
         {
             discrete_speed++;
-            std::cout << "Set speed to " << discrete_speed * 0.005d << " m/s." << std::endl;
+            std::cout << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s." << std::endl;
         }
     }
-    if (joystick_commands.axes[5] == -1 && last_axes_values[5] == 0 && discrete_speed_mode)     //ABS_HAT0Y (dpad)
+    else if (joystick_commands.axes[5] == -1 && last_axes_values[5] == 0 && discrete_speed_mode)     //ABS_HAT0Y (dpad)
     {
-        if ((discrete_speed - 1) * 0.005d >= -MAX_SPEED)
+        if ((discrete_speed - 1) * DISCRETE_SPEED_FACTOR >= -MAX_SPEED)
         {
             discrete_speed--;
-            std::cout << "Set speed to " << discrete_speed * 0.005d << " m/s." << std::endl;
+            std::cout << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s." << std::endl;
         }
     }
+
+    if (joystick_commands.axes[4] == 1 && last_axes_values[4] == 0)     //ABS_HAT0X (dpad)
+    {
+        if ((offset_speed + 1) * OFFSET_SPEED_FACTOR <= MAX_OFFSET_SPEED)
+        {
+            offset_speed++;
+            std::cout << "Set offset speed to " << offset_speed * OFFSET_SPEED_FACTOR << " m/s." << std::endl;
+        }
+    }
+    else if (joystick_commands.axes[4] == -1 && last_axes_values[4] == 0)     //ABS_HAT0X (dpad)
+    {
+        if ((offset_speed - 1) * OFFSET_SPEED_FACTOR >= -MAX_OFFSET_SPEED)
+        {
+            offset_speed--;
+            std::cout << "Set offset speed to " << offset_speed * OFFSET_SPEED_FACTOR << " m/s." << std::endl;
+        }
+    }
+
     if (joystick_commands.buttons[10] == 1 && last_button_values[10] == 0)    //BTN_SELECT (left push button)
     {
         if (!discrete_speed_mode)
         {
             discrete_speed_mode = true;
 	    discrete_speed = 0;
-            std::cout << "Switched to discrete speed mode." << std::endl;
-            std::cout << "Set speed to " << discrete_speed * 0.005d << " m/s." << std::endl; 
+            std::cout << "Switched to discrete walking speed mode." << std::endl;
+            std::cout << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s." << std::endl; 
         }
         else
         {
             discrete_speed_mode = false;
-            std::cout << "Switched to continuous speed mode." << std::endl;
+            std::cout << "Switched to continuous walking speed mode." << std::endl;
         }
     }
 
     if (discrete_speed_mode)
-        wheelwalking_control->setSpeed(discrete_speed * 0.005d);
+        wheelwalking_control->setSpeed(discrete_speed * DISCRETE_SPEED_FACTOR);
     else
         wheelwalking_control->setSpeed(joystick_commands.axes[1] * MAX_SPEED);   //ABS_Y (left analog) - sign might have to be switched!!
+
+    wheelwalking_control->setOffsetSpeed(offset_speed * OFFSET_SPEED_FACTOR);
+    wheelwalking_control->setStepLength(step_length * STEP_LENGTH_FACTOR);
 
     last_button_values = joystick_commands.buttons.elements;
     last_axes_values = joystick_commands.axes.elements;

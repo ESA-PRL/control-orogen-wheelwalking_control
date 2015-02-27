@@ -35,18 +35,31 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
         ExoterWheelwalkingControl* wheelwalking_control;
     private:
         bool first_iteration;
+        
         std::vector<int> last_button_values;
         std::vector<double> last_axes_values;
         std::vector<double> last_position_commands;
         std::vector<double> last_velocity_commands;
         std::vector<std::string> joint_commands_names;
         std::vector<std::string> joint_readings_names;
+        
         bool deadmans_switch;
         bool kill_switch;
-        bool discrete_speed_mode;
-        int discrete_speed; // constant speed in multiples of 0.005 m/s
 
-        const double MAX_SPEED; // Maximum speed in body x-direction in m/s.
+        static const double MAX_SPEED = 0.02d; // maximum walking body speed
+
+        bool discrete_speed_mode;
+        int discrete_speed;
+        static const double DISCRETE_SPEED_FACTOR = 0.005d; // walking speed increment in m/s
+
+        int offset_speed;
+        static const double OFFSET_SPEED_FACTOR = 0.005d; // offset speed increment in m/s
+        static const double MAX_OFFSET_SPEED = 0.02d;
+
+        int step_length;
+        static const double STEP_LENGTH_FACTOR = 0.02d; // step length increment in m
+        static const double MAX_STEP_LENGTH = 0.12d;
+        static const double MIN_STEP_LENGTH = 0.02d;
 
         /** Maps the button presses and joystick movements to the corresponding function calls in the egress control and realizes the intended human interface behaviour.
          * \param joystick_commands Raw commands from joystick containing axes and button values.
