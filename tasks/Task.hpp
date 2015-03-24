@@ -44,7 +44,8 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
         std::vector<double> last_velocity_commands;
         std::vector<std::string> joint_commands_names;
         std::vector<std::string> joint_readings_names;
-        
+        std::vector<std::string> disabled_walking_joints;        
+
         bool deadmans_switch;
         bool kill_switch;
 

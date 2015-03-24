@@ -38,7 +38,32 @@ bool Task::configureHook()
     velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
     last_position_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
     last_velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
-    first_iteration=true;
+    first_iteration = true;
+
+    disabled_walking_joints = _disabled_walking_joints.get();
+
+    std::vector<bool> walking_joints_status;
+    walking_joints_status.assign(6, true);	
+
+    for (unsigned int i = 0; i < disabled_walking_joints.size(); i++)
+    {
+    std::string disabled_joint = disabled_walking_joints[i];
+
+    if (disabled_joint == "WHEEL_WALK_FL")
+                walking_joints_status[0] = false;
+    else if (disabled_joint == "WHEEL_WALK_FR")
+                    walking_joints_status[1] = false;
+    else if (disabled_joint == "WHEEL_WALK_CL")
+                    walking_joints_status[2] = false;
+    else if (disabled_joint == "WHEEL_WALK_CR")
+                    walking_joints_status[3] = false;
+    else if (disabled_joint == "WHEEL_WALK_RL")
+                    walking_joints_status[4] = false;
+    else if (disabled_joint == "WHEEL_WALK_RR")
+                    walking_joints_status[5] = false;
+    }
+
+    wheelwalking_control->setWalkingJointsStatus(walking_joints_status);
 
     wheelwalking_control->selectMode(AXLE_BY_AXLE);
 
@@ -70,15 +95,10 @@ void Task::updateHook()
     if (_joint_readings.read(joint_readings) == RTT::NewData)
         evaluateJointReadings(joint_readings);
 
-    if (kill_switch)
-    {
-        position_commands.assign(NUMBER_OF_ACTIVE_JOINTS, std::numeric_limits<double>::quiet_NaN());
-        velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS, 0.0d);
-    }
-    else
-    {
-        wheelwalking_control->getJointCommands(position_commands, velocity_commands);
-    }
+    std::vector<double> position_commands;
+    std::vector<double> velocity_commands;
+
+    wheelwalking_control->getJointCommands(position_commands, velocity_commands);
 
     if (position_commands != last_position_commands || velocity_commands != last_velocity_commands)
 //    if (differentCommands())
@@ -119,35 +139,43 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
     {
         kill_switch = true;
 
+		wheelwalking_control->stopMotion();
+
         std::cout << "Kill switch engaged." << std::endl;
     }
     else if (joystick_commands.buttons[7] == 1 && last_button_values[7] == 0)    //BTN_TR (right bottom)
     {
         kill_switch = false;
 
+		wheelwalking_control->startMotion();
+
         std::cout << "Kill switch disengaged." << std::endl;
     }
 
-    if (joystick_commands.buttons[11] == 1 && last_button_values[11] == 0)    //BTN_START (right push button)
+    if (joystick_commands.buttons[11] == 1 && last_button_values[11] == 0)	//BTN_START (right push button)
     {
-       wheelwalking_control->selectNextGait();
+    	wheelwalking_control->selectNextGait();
     }
     else if (joystick_commands.buttons[0] == 1 && last_button_values[0] == 0) //BTN_A (blue)
     {
-	wheelwalking_control->selectMode(0);
+		wheelwalking_control->selectMode(0);
     }
     else if (joystick_commands.buttons[1] == 1 && last_button_values[1] == 0) //BTN_B (green)
     {
-	wheelwalking_control->selectMode(1);
+		wheelwalking_control->selectMode(1);
     }
     else if (joystick_commands.buttons[2] == 1 && last_button_values[2] == 0) //BTN_C (red)
     {
-	wheelwalking_control->selectMode(2);
+		wheelwalking_control->selectMode(2);
     }
     else if (joystick_commands.buttons[3] == 1 && last_button_values[3] == 0) //BTN_X (yellow)
     {
-	wheelwalking_control->selectMode(3);
+		wheelwalking_control->selectMode(3);
     }
+	else if (joystick_commands.buttons[9] == 1 && last_button_values[9] == 0)	//BTN_TR2 (start)
+	{
+		wheelwalking_control->initJointConfiguration();
+	}
 
     if (joystick_commands.buttons[5] == 1 && last_button_values[5] == 0) //BTN_Z (right top)
     {
@@ -230,7 +258,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
 
 void Task::evaluateJointReadings(const base::samples::Joints joint_readings)
 {
-    // Joint order in postion_readings & velocity_readings: [left_passive, right_passive, rear_passive, fl_walking, fr_walking, ml_walking, mr_walking, rl_walking, rr_walking, fl_steer, fr_steer, rl_steer, rr_steer, fl_drive, fr_drive, ml_drive, mr_drive, rl_drive, rr_drive]
+    // Joint order in position_readings & velocity_readings: [left_passive, right_passive, rear_passive, fl_walking, fr_walking, ml_walking, mr_walking, rl_walking, rr_walking, fl_steer, fr_steer, rl_steer, rr_steer, fl_drive, fr_drive, ml_drive, mr_drive, rl_drive, rr_drive]
 
     std::vector<double> position_readings;
     std::vector<double> velocity_readings;
