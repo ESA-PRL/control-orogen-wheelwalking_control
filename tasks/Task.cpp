@@ -154,7 +154,11 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
     {
 		wheelwalking_control->selectMode(3);
     }
-	else if (joystick_commands.buttons[9] == 1 && last_button_values[9] == 0)	//BTN_TR2 (start)
+    else if (joystick_commands.buttons[9] == 1 && last_button_values[9] == 0) //BTN_TR2 (start)
+    {
+		wheelwalking_control->selectMode(4);
+    }
+	else if (joystick_commands.buttons[8] == 1 && last_button_values[8] == 0)	//BTN_TL2 (back)
 	{
 		wheelwalking_control->initJointConfiguration();
 	}
