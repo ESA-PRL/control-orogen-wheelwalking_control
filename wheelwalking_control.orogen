@@ -39,6 +39,18 @@ task_context "Task" do
     property('joint_readings_names', '/std/vector<std/string>').
         doc 'Required reading joint names in that order. Joint dispatcher is searching by names.'
 
+    property('initial_gait', '/std/vector<std/string>').
+        doc 'Initial gait (either AXLE_BY_AXLE, SIDE_BY_SIDE, EVEN_ODD or SINGLE_WHEEL)'
+
+    property('discrete_speed', 'double').
+        doc 'Initial discrete speed setting in m/s. Will get limited to +-MAX_SPEED (set in the code).'
+
+    property('offset_speed', 'double').
+        doc 'Initial offset speed setting in m/s. Will get limited to +-MAX_OFFSET_SPEED (set in the code).'
+
+    property('step_length', 'double').
+        doc 'Initial step length setting in m. Will get limited to MIN/MAX_STEP_LENGTH (set in the code).'
+
     property('disabled_walking_joints', '/std/vector<std/string>').
 	doc 'List of non-moving walking joints. Used to test adaptability of the kinematic model.'
 
