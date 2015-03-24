@@ -38,6 +38,8 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
         
         std::vector<int> last_button_values;
         std::vector<double> last_axes_values;
+        std::vector<double> position_commands;
+        std::vector<double> velocity_commands;
         std::vector<double> last_position_commands;
         std::vector<double> last_velocity_commands;
         std::vector<std::string> joint_commands_names;
@@ -77,6 +79,12 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
          * \param velocity_commands Velocity commands computed by egress control.
          */
         base::commands::Joints assembleJointCommands(const std::vector<double> position_commands, const std::vector<double> velocity_commands);
+
+         /** Compares the last vector commands with the new vector of commands within a range.
+         * \return boolean value of the comparison. True if any command in the vector differs from the last value more than a given range.
+         */
+        bool differentCommands();
+
     public:
         /** TaskContext constructor for Task
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.

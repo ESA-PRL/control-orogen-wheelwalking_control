@@ -34,34 +34,36 @@ bool Task::configureHook()
 
     joint_commands_names = _joint_commands_names.get();
     joint_readings_names = _joint_readings_names.get();
+    position_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
+    velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
     last_position_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
     last_velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
     first_iteration = true;
 
-	disabled_walking_joints = _disabled_walking_joints.get();
+    disabled_walking_joints = _disabled_walking_joints.get();
 
-	std::vector<bool> walking_joints_status;
-	walking_joints_status.assign(6, true);	
+    std::vector<bool> walking_joints_status;
+    walking_joints_status.assign(6, true);	
 
-	for (unsigned int i = 0; i < disabled_walking_joints.size(); i++)
-	{
-        std::string disabled_joint = disabled_walking_joints[i];
+    for (unsigned int i = 0; i < disabled_walking_joints.size(); i++)
+    {
+    std::string disabled_joint = disabled_walking_joints[i];
 
-        if (disabled_joint == "WHEEL_WALK_FL")
-		    walking_joints_status[0] = false;
-        else if (disabled_joint == "WHEEL_WALK_FR")
-			walking_joints_status[1] = false;
-        else if (disabled_joint == "WHEEL_WALK_CL")
-			walking_joints_status[2] = false;
-        else if (disabled_joint == "WHEEL_WALK_CR")
-			walking_joints_status[3] = false;
-        else if (disabled_joint == "WHEEL_WALK_RL")
-			walking_joints_status[4] = false;
-        else if (disabled_joint == "WHEEL_WALK_RR")
-			walking_joints_status[5] = false;
-	}
+    if (disabled_joint == "WHEEL_WALK_FL")
+                walking_joints_status[0] = false;
+    else if (disabled_joint == "WHEEL_WALK_FR")
+                    walking_joints_status[1] = false;
+    else if (disabled_joint == "WHEEL_WALK_CL")
+                    walking_joints_status[2] = false;
+    else if (disabled_joint == "WHEEL_WALK_CR")
+                    walking_joints_status[3] = false;
+    else if (disabled_joint == "WHEEL_WALK_RL")
+                    walking_joints_status[4] = false;
+    else if (disabled_joint == "WHEEL_WALK_RR")
+                    walking_joints_status[5] = false;
+    }
 
-	wheelwalking_control->setWalkingJointsStatus(walking_joints_status);
+    wheelwalking_control->setWalkingJointsStatus(walking_joints_status);
 
     wheelwalking_control->selectMode(AXLE_BY_AXLE);
 
@@ -99,13 +101,29 @@ void Task::updateHook()
     wheelwalking_control->getJointCommands(position_commands, velocity_commands);
 
     if (position_commands != last_position_commands || velocity_commands != last_velocity_commands)
+//    if (differentCommands())
     {
-        //std::cout << "Wheel Walking Control: Update Hook: New command sent to joint dispatcher" << std::endl;
+//        std::cout << "Wheel Walking Control: Update Hook: New command sent to joint dispatcher" << std::endl;
         base::commands::Joints joint_commands = assembleJointCommands(position_commands, velocity_commands);
         _joint_commands.write(joint_commands);
         last_position_commands=position_commands;
         last_velocity_commands=velocity_commands;
     }
+}
+
+bool Task::differentCommands()
+{
+    double epsilon = 0.01;
+    for (int i=0;i<NUMBER_OF_ACTIVE_JOINTS;i++)
+    {
+        //std::cout << "position " << i << ": " << position_commands[i] << " velocity " << i << ": " << velocity_commands[i] << " abs_dif: " << std::abs(position_commands[i]-last_position_commands[i]) << std::endl;
+        //std::cout << "last position " << i << ": " << last_position_commands[i] << " last velocity " << i << ": " << last_velocity_commands[i] << " abs_dif: " << std::abs(velocity_commands[i]-last_velocity_commands[i]) << std::endl;
+        if ( (std::abs(position_commands[i]-last_position_commands[i])>epsilon) || (std::abs(velocity_commands[i]-last_velocity_commands[i])>epsilon) )
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_commands)
