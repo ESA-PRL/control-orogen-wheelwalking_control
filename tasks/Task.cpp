@@ -36,7 +36,32 @@ bool Task::configureHook()
     joint_readings_names = _joint_readings_names.get();
     last_position_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
     last_velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
-    first_iteration=true;
+    first_iteration = true;
+
+	disabled_walking_joints = _disabled_walking_joints.get();
+
+	std::vector<bool> walking_joints_status;
+	walking_joints_status.assign(6, true);	
+
+	for (unsigned int i = 0; i < disabled_walking_joints.size(); i++)
+	{
+        std::string disabled_joint = disabled_walking_joints[i];
+
+        if (disabled_joint == "WHEEL_WALK_FL")
+		    walking_joints_status[0] = false;
+        else if (disabled_joint == "WHEEL_WALK_FR")
+			walking_joints_status[1] = false;
+        else if (disabled_joint == "WHEEL_WALK_CL")
+			walking_joints_status[2] = false;
+        else if (disabled_joint == "WHEEL_WALK_CR")
+			walking_joints_status[3] = false;
+        else if (disabled_joint == "WHEEL_WALK_RL")
+			walking_joints_status[4] = false;
+        else if (disabled_joint == "WHEEL_WALK_RR")
+			walking_joints_status[5] = false;
+	}
+
+	wheelwalking_control->setWalkingJointsStatus(walking_joints_status);
 
     wheelwalking_control->selectMode(AXLE_BY_AXLE);
 
@@ -215,7 +240,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
 
 void Task::evaluateJointReadings(const base::samples::Joints joint_readings)
 {
-    // Joint order in postion_readings & velocity_readings: [left_passive, right_passive, rear_passive, fl_walking, fr_walking, ml_walking, mr_walking, rl_walking, rr_walking, fl_steer, fr_steer, rl_steer, rr_steer, fl_drive, fr_drive, ml_drive, mr_drive, rl_drive, rr_drive]
+    // Joint order in position_readings & velocity_readings: [left_passive, right_passive, rear_passive, fl_walking, fr_walking, ml_walking, mr_walking, rl_walking, rr_walking, fl_steer, fr_steer, rl_steer, rr_steer, fl_drive, fr_drive, ml_drive, mr_drive, rl_drive, rr_drive]
 
     std::vector<double> position_readings;
     std::vector<double> velocity_readings;

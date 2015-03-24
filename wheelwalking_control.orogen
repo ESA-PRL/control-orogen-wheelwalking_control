@@ -39,6 +39,9 @@ task_context "Task" do
     property('joint_readings_names', '/std/vector<std/string>').
         doc 'Required reading joint names in that order. Joint dispatcher is searching by names.'
 
+    property('disabled_walking_joints', '/std/vector<std/string>').
+	doc 'List of non-moving walking joints. Used to test adaptability of the kinematic model.'
+
     # An input port, i.e. an object from which the component gets data from
     # other components' outputs
     #
