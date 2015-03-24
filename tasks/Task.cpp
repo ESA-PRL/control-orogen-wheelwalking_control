@@ -34,6 +34,8 @@ bool Task::configureHook()
 
     joint_commands_names = _joint_commands_names.get();
     joint_readings_names = _joint_readings_names.get();
+    position_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
+    velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
     last_position_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
     last_velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
     first_iteration=true;
@@ -68,9 +70,6 @@ void Task::updateHook()
     if (_joint_readings.read(joint_readings) == RTT::NewData)
         evaluateJointReadings(joint_readings);
 
-    std::vector<double> position_commands;
-    std::vector<double> velocity_commands;
-
     if (kill_switch)
     {
         position_commands.assign(NUMBER_OF_ACTIVE_JOINTS, std::numeric_limits<double>::quiet_NaN());
@@ -82,13 +81,29 @@ void Task::updateHook()
     }
 
     if (position_commands != last_position_commands || velocity_commands != last_velocity_commands)
+//    if (differentCommands())
     {
-        //std::cout << "Wheel Walking Control: Update Hook: New command sent to joint dispatcher" << std::endl;
+//        std::cout << "Wheel Walking Control: Update Hook: New command sent to joint dispatcher" << std::endl;
         base::commands::Joints joint_commands = assembleJointCommands(position_commands, velocity_commands);
         _joint_commands.write(joint_commands);
         last_position_commands=position_commands;
         last_velocity_commands=velocity_commands;
     }
+}
+
+bool Task::differentCommands()
+{
+    double epsilon = 0.01;
+    for (int i=0;i<NUMBER_OF_ACTIVE_JOINTS;i++)
+    {
+        //std::cout << "position " << i << ": " << position_commands[i] << " velocity " << i << ": " << velocity_commands[i] << " abs_dif: " << std::abs(position_commands[i]-last_position_commands[i]) << std::endl;
+        //std::cout << "last position " << i << ": " << last_position_commands[i] << " last velocity " << i << ": " << last_velocity_commands[i] << " abs_dif: " << std::abs(velocity_commands[i]-last_velocity_commands[i]) << std::endl;
+        if ( (std::abs(position_commands[i]-last_position_commands[i])>epsilon) || (std::abs(velocity_commands[i]-last_velocity_commands[i])>epsilon) )
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_commands)
