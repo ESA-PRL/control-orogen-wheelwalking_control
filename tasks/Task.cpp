@@ -47,20 +47,20 @@ bool Task::configureHook()
 
     for (unsigned int i = 0; i < disabled_walking_joints.size(); i++)
     {
-    std::string disabled_joint = disabled_walking_joints[i];
+        std::string disabled_joint = disabled_walking_joints[i];
 
-    if (disabled_joint == "WHEEL_WALK_FL")
-                walking_joints_status[0] = false;
-    else if (disabled_joint == "WHEEL_WALK_FR")
-                    walking_joints_status[1] = false;
-    else if (disabled_joint == "WHEEL_WALK_CL")
-                    walking_joints_status[2] = false;
-    else if (disabled_joint == "WHEEL_WALK_CR")
-                    walking_joints_status[3] = false;
-    else if (disabled_joint == "WHEEL_WALK_RL")
-                    walking_joints_status[4] = false;
-    else if (disabled_joint == "WHEEL_WALK_RR")
-                    walking_joints_status[5] = false;
+        if (disabled_joint == "WHEEL_WALK_FL")
+            walking_joints_status[0] = false;
+        else if (disabled_joint == "WHEEL_WALK_FR")
+            walking_joints_status[1] = false;
+        else if (disabled_joint == "WHEEL_WALK_CL")
+            walking_joints_status[2] = false;
+        else if (disabled_joint == "WHEEL_WALK_CR")
+            walking_joints_status[3] = false;
+        else if (disabled_joint == "WHEEL_WALK_BL")
+            walking_joints_status[4] = false;
+        else if (disabled_joint == "WHEEL_WALK_BR")
+            walking_joints_status[5] = false;
     }
 
     wheelwalking_control->setWalkingJointsStatus(walking_joints_status);
@@ -73,6 +73,9 @@ bool Task::configureHook()
     std::cout << "Offset speed: " << offset_speed * OFFSET_SPEED_FACTOR << " m/s" << std::endl;
     std::cout << "Step length: " << step_length * STEP_LENGTH_FACTOR << " m" << std::endl;
     std::cout << "Kill switch " << (kill_switch ? "engaged." : "disengaged.") << std::endl;
+
+    if (kill_switch)
+    	wheelwalking_control->stopMotion();
 
     return true;
 }
