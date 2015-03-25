@@ -39,8 +39,8 @@ task_context "Task" do
     property('joint_readings_names', '/std/vector<std/string>').
         doc 'Required reading joint names in that order. Joint dispatcher is searching by names.'
 
-    property('initial_gait', '/std/vector<std/string>').
-        doc 'Initial gait (either AXLE_BY_AXLE, SIDE_BY_SIDE, EVEN_ODD or SINGLE_WHEEL)'
+    property('initial_gait', 'std/string').
+        doc 'Initial gait (either AXLE_BY_AXLE, SIDE_BY_SIDE, EVEN_ODD, SINGLE_WHEEL or NORMAL_DRIVING)'
 
     property('discrete_speed', 'double').
         doc 'Initial discrete speed setting in m/s. Will get limited to +-MAX_SPEED (set in the code).'
