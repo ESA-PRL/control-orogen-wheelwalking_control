@@ -4,10 +4,10 @@
 #define WHEELWALKING_CONTROL_TASK_TASK_HPP
 
 #include "wheelwalking_control/TaskBase.hpp"
-#include "exoter/ExoterWheelwalkingTypes.hpp"
-#include "exoter/ExoterWheelwalkingControl.hpp"
+#include "exoter_kinematics/ExoterWheelwalkingTypes.hpp"
+#include "exoter_kinematics/ExoterWheelwalkingControl.hpp"
 
-using namespace exoter;
+using namespace exoter_kinematics;
 
 namespace wheelwalking_control {
 

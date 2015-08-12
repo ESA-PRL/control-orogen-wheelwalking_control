@@ -2,7 +2,7 @@ name "wheelwalking_control"
 # Optionally declare the version number
 # version "0.1"
 
-using_library "exoter"
+using_library "exoter_kinematics"
 
 # If new data types need to be defined, they have to be put in a separate C++
 # header, and this header will be loaded here

@@ -4,7 +4,7 @@
 #include <iostream>
 
 using namespace wheelwalking_control;
-using namespace exoter;
+using namespace exoter_kinematics;
 
 Task::Task(std::string const& name)
     : TaskBase(name), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(0), offset_speed(0), step_length(2)
