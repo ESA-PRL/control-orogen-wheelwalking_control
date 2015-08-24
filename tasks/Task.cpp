@@ -6,6 +6,14 @@
 using namespace wheelwalking_control;
 using namespace exoter_kinematics;
 
+static const double MAX_SPEED = 0.02d; // maximum walking body speed
+static const double DISCRETE_SPEED_FACTOR = 0.005d; // walking speed increment in m/s
+static const double OFFSET_SPEED_FACTOR = 0.005d; // offset speed increment in m/s
+static const double MAX_OFFSET_SPEED = 0.02d;
+static const double STEP_LENGTH_FACTOR = 0.02d; // step length increment in m
+static const double MAX_STEP_LENGTH = 0.12d;
+static const double MIN_STEP_LENGTH = 0.02d;
+
 Task::Task(std::string const& name)
     : TaskBase(name), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(0), offset_speed(0), step_length(2)
 {
