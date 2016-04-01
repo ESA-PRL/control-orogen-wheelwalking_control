@@ -7,6 +7,13 @@
 #include "exoter_kinematics/ExoterWheelwalkingTypes.hpp"
 #include "exoter_kinematics/ExoterWheelwalkingControl.hpp"
 
+/** Base types **/
+#include <base/samples/Joints.hpp>
+#include <base/commands/Joints.hpp>
+
+/** STD **/
+#include <vector>
+
 using namespace exoter_kinematics;
 
 namespace wheelwalking_control {
