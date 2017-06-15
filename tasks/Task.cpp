@@ -11,17 +11,17 @@ static const double DISCRETE_SPEED_FACTOR = 0.005d; // walking speed increment i
 static const double OFFSET_SPEED_FACTOR = 0.005d; // offset speed increment in m/s
 static const double MAX_OFFSET_SPEED = 0.02d;
 static const double STEP_LENGTH_FACTOR = 0.02d; // step length increment in m
-static const double MAX_STEP_LENGTH = 0.12d;
+static const double MAX_STEP_LENGTH = 0.20d;
 static const double MIN_STEP_LENGTH = 0.02d;
 
 Task::Task(std::string const& name)
-    : TaskBase(name), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(0), offset_speed(0), step_length(2)
+    : TaskBase(name), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(5)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
-    : TaskBase(name, engine), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(0), offset_speed(0), step_length(2)
+    : TaskBase(name, engine), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(5)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
@@ -73,9 +73,9 @@ bool Task::configureHook()
 
     wheelwalking_control->setWalkingJointsStatus(walking_joints_status);
 
-    wheelwalking_control->selectMode(AXLE_BY_AXLE);
+    wheelwalking_control->selectMode(SIDE_BY_SIDE);
 
-    std::cout << "Initial gait: AXLE_BY_AXLE" << std::endl;
+    std::cout << "Initial gait: SIDE_BY_SIDE" << std::endl;
     std::cout << "Discrete speed mode " << (discrete_speed_mode ? "enabled." : "disabled.") << std::endl;
     std::cout << "Discrete speed: " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s" << std::endl;
     std::cout << "Offset speed: " << offset_speed * OFFSET_SPEED_FACTOR << " m/s" << std::endl;
@@ -100,6 +100,23 @@ void Task::updateHook()
     controldev::RawCommand joystick_commands;
     base::samples::Joints joint_readings;
 
+    if(_kill_switch.read(kill_switch) == RTT::NewData)
+    {
+        if (kill_switch)
+        {
+            wheelwalking_control->stopMotion();
+            std::cout << "Kill switch engaged." << std::endl;
+        }
+        else
+        {
+            //wheelwalking_control->initJointConfiguration();
+            wheelwalking_control->selectMode(1);
+            wheelwalking_control->startMotion();
+            std::cout << "Kill switch disengaged." << std::endl;
+            
+        }
+    }
+
     if (_joystick_commands.read(joystick_commands) == RTT::NewData)
         evaluateJoystickCommands(joystick_commands);
 
@@ -108,7 +125,6 @@ void Task::updateHook()
 
     std::vector<double> position_commands;
     std::vector<double> velocity_commands;
-
     wheelwalking_control->getJointCommands(position_commands, velocity_commands);
 
     if (position_commands != last_position_commands || velocity_commands != last_velocity_commands)
@@ -286,6 +302,7 @@ void Task::evaluateJointReadings(const base::samples::Joints joint_readings)
     for (int i = 0; i < NUMBER_OF_PASSIVE_JOINTS + NUMBER_OF_ACTIVE_JOINTS; i++)
     {
         current_joint = joint_readings[joint_readings_names[i]];
+        //std::cout << "Joint: " << joint_readings_names[i] << " -> Position:  " << current_joint.position << std::endl;
 
         position_readings[i] = current_joint.hasPosition() ? current_joint.position : std::numeric_limits<double>::quiet_NaN();
         velocity_readings[i] = current_joint.hasSpeed() ? current_joint.speed : std::numeric_limits<double>::quiet_NaN();

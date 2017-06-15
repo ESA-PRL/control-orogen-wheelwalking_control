@@ -62,6 +62,7 @@ task_context "Task" do
     # input is connected to an output or not.
     input_port "joystick_commands", "controldev/RawCommand"
     input_port "joint_readings", "base/samples/Joints"
+    input_port "kill_switch", "bool"
 
     # An output port, i.e. an object to which the component pushes data so that
     # it is transmitted to other components' inputs
@@ -72,9 +73,9 @@ task_context "Task" do
 
     # If you want that component's updateHook() to be executed when the "input"
     # port gets data, uncomment this and comment the 'periodic' line
-    # port_driven "joint_readings", "joystick_commands"
-    port_driven "joint_readings" #, "joystick_commands" # commented this port to check if CAN bus does not get overloaded
+    port_driven
+    # port_driven # commented this port to check if CAN bus does not get overloaded
     # By default, the task will be periodic with a period of 0.1
-    # periodic 0.1
+    # periodic 0.05
 end
 
