@@ -15,13 +15,13 @@ static const double MAX_STEP_LENGTH = 0.20d;
 static const double MIN_STEP_LENGTH = 0.02d;
 
 Task::Task(std::string const& name)
-    : TaskBase(name), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(5)
+    : TaskBase(name), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(3)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
-    : TaskBase(name, engine), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(5)
+    : TaskBase(name, engine), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(3)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
@@ -101,19 +101,21 @@ void Task::updateHook()
     base::samples::Joints joint_readings;
 
     if(_kill_switch.read(kill_switch) == RTT::NewData)
-    {
+    { 
         if (kill_switch)
         {
+            std::cout << "WWCONTROL: stop and reset deployment joints" << std::endl;
             wheelwalking_control->stopMotion();
+            wheelwalking_control->initJointConfiguration();
             std::cout << "Kill switch engaged." << std::endl;
         }
         else
         {
-            //wheelwalking_control->initJointConfiguration();
-            wheelwalking_control->selectMode(1);
+            std::cout << "WWCONTROL: initializing wheel-walking motion" << std::endl;
+            //wheelwalking_control->selectMode(1);
             wheelwalking_control->startMotion();
-            std::cout << "Kill switch disengaged." << std::endl;
-            
+            wheelwalking_control->initJointConfiguration();
+            std::cout << "Kill switch disengaged." << std::endl;    
         }
     }
 
