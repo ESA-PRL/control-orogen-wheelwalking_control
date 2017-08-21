@@ -18,7 +18,7 @@ using namespace exoter_kinematics;
 
 namespace wheelwalking_control {
 
-    /*! \class Task 
+    /*! \class Task
      * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
      * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
      * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
@@ -33,7 +33,7 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
          task('custom_task_name','wheelwalking_control::Task')
      end
      \endverbatim
-     *  It can be dynamically adapted when the deployment is called with a prefix argument. 
+     *  It can be dynamically adapted when the deployment is called with a prefix argument.
      */
     class Task : public TaskBase
     {
@@ -42,7 +42,7 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
         ExoterWheelwalkingControl* wheelwalking_control;
     private:
         bool first_iteration;
-        
+
         std::vector<int> last_button_values;
         std::vector<double> last_axes_values;
         std::vector<double> position_commands;
@@ -51,15 +51,18 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
         std::vector<double> last_velocity_commands;
         std::vector<std::string> joint_commands_names;
         std::vector<std::string> joint_readings_names;
-        std::vector<std::string> disabled_walking_joints;        
+        std::vector<std::string> disabled_walking_joints;
 
         bool deadmans_switch;
+        bool resetDepJoints;
+        bool last_resetDepJoints;
         bool kill_switch;
+        bool last_kill_switch;
         bool discrete_speed_mode;
         int discrete_speed;
         int offset_speed;
         int step_length;
-        
+
         /** Maps the button presses and joystick movements to the corresponding function calls in the egress control and realizes the intended human interface behaviour.
          * \param joystick_commands Raw commands from joystick containing axes and button values.
          */
@@ -88,10 +91,10 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
          */
         Task(std::string const& name = "wheelwalking_control::Task");
 
-        /** TaskContext constructor for Task 
-         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices. 
-         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task. 
-         * 
+        /** TaskContext constructor for Task
+         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
+         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
+         *
          */
         Task(std::string const& name, RTT::ExecutionEngine* engine);
 
@@ -128,7 +131,7 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
          *
          * The error(), exception() and fatal() calls, when called in this hook,
          * allow to get into the associated RunTimeError, Exception and
-         * FatalError states. 
+         * FatalError states.
          *
          * In the first case, updateHook() is still called, and recover() allows
          * you to go back into the Running state.  In the second case, the
@@ -160,4 +163,3 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
 }
 
 #endif
-

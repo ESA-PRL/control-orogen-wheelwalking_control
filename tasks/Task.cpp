@@ -51,7 +51,7 @@ bool Task::configureHook()
     disabled_walking_joints = _disabled_walking_joints.get();
 
     std::vector<bool> walking_joints_status;
-    walking_joints_status.assign(6, true);	
+    walking_joints_status.assign(6, true);
 
     for (unsigned int i = 0; i < disabled_walking_joints.size(); i++)
     {
@@ -85,6 +85,9 @@ bool Task::configureHook()
     if (kill_switch)
     	wheelwalking_control->stopMotion();
 
+    last_kill_switch = kill_switch;
+    last_resetDepJoints = false;
+    resetDepJoints = false;
     return true;
 }
 bool Task::startHook()
@@ -101,21 +104,34 @@ void Task::updateHook()
     base::samples::Joints joint_readings;
 
     if(_kill_switch.read(kill_switch) == RTT::NewData)
-    { 
-        if (kill_switch)
+    {
+        if (kill_switch != last_kill_switch)
         {
-            std::cout << "WWCONTROL: stop and reset deployment joints" << std::endl;
-            wheelwalking_control->stopMotion();
-            wheelwalking_control->initJointConfiguration();
-            std::cout << "Kill switch engaged." << std::endl;
+            last_kill_switch = kill_switch;
+            if (kill_switch)
+            {
+                wheelwalking_control->stopMotion();
+                std::cout << "WWCONTROL: kill switch engaged" << std::endl;
+            }
+            else
+            {
+                wheelwalking_control->startMotion();
+                std::cout << "WWCONTROL: kill switch disengaged" << std::endl;
+            }
         }
-        else
+    }
+
+    if(_resetDepJoints.read(resetDepJoints) == RTT::NewData)
+    {
+        if((resetDepJoints != last_resetDepJoints)&&(resetDepJoints))
         {
-            std::cout << "WWCONTROL: initializing wheel-walking motion" << std::endl;
-            //wheelwalking_control->selectMode(1);
-            wheelwalking_control->startMotion();
+            last_resetDepJoints = resetDepJoints;
             wheelwalking_control->initJointConfiguration();
-            std::cout << "Kill switch disengaged." << std::endl;    
+            std::cout << "WWCONTROL: reset deployment joints" << std::endl;
+        }
+        else if (!resetDepJoints)
+        {
+            last_resetDepJoints = resetDepJoints;
         }
     }
 
@@ -268,7 +284,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
             discrete_speed_mode = true;
 	    discrete_speed = 0;
             std::cout << "Switched to discrete walking speed mode." << std::endl;
-            std::cout << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s." << std::endl; 
+            std::cout << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s." << std::endl;
         }
         else
         {
