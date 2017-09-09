@@ -105,9 +105,9 @@ void Task::updateHook()
 
     if(_kill_switch.read(kill_switch) == RTT::NewData)
     {
-        if (kill_switch != last_kill_switch)
+        /*if (kill_switch != last_kill_switch)
         {
-            last_kill_switch = kill_switch;
+            last_kill_switch = kill_switch;*/
             if (kill_switch)
             {
                 wheelwalking_control->stopMotion();
@@ -118,20 +118,30 @@ void Task::updateHook()
                 wheelwalking_control->startMotion();
                 std::cout << "WWCONTROL: kill switch disengaged" << std::endl;
             }
-        }
+        wheelwalking_control->setSpeed(0.02);
+            wheelwalking_control->setOffsetSpeed(0);
+            wheelwalking_control->setStepLength(0.06);
+        //}
     }
 
     if(_resetDepJoints.read(resetDepJoints) == RTT::NewData)
     {
-        if((resetDepJoints != last_resetDepJoints)&&(resetDepJoints))
+        /*if((resetDepJoints != last_resetDepJoints)&&(resetDepJoints))
         {
             last_resetDepJoints = resetDepJoints;
             wheelwalking_control->initJointConfiguration();
             std::cout << "WWCONTROL: reset deployment joints" << std::endl;
-        }
-        else if (!resetDepJoints)
+        }*/
+        /*else if (!resetDepJoints)
         {
             last_resetDepJoints = resetDepJoints;
+        }*/
+        if(resetDepJoints)
+        {
+            wheelwalking_control->initJointConfiguration();
+            wheelwalking_control->setSpeed(0.02);
+            wheelwalking_control->setOffsetSpeed(0);
+            wheelwalking_control->setStepLength(0.06);
         }
     }
 
@@ -150,6 +160,14 @@ void Task::updateHook()
     {
 //        std::cout << "Wheel Walking Control: Update Hook: New command sent to joint dispatcher" << std::endl;
         base::commands::Joints joint_commands = assembleJointCommands(position_commands, velocity_commands);
+        /*std::cout << "Wheel Walking Control: Positions -> ";
+        for (uint i = 0; i<position_commands.size(); i++)
+            std::cout << position_commands[i] << " ";
+        std::cout  << std::endl;
+        std::cout << "Wheel Walking Control: Velocities -> ";
+        for (uint i = 0; i<velocity_commands.size(); i++)
+            std::cout << velocity_commands[i] << " ";
+        std::cout  << std::endl;*/
         _joint_commands.write(joint_commands);
         last_position_commands=position_commands;
         last_velocity_commands=velocity_commands;
