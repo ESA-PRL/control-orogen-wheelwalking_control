@@ -124,7 +124,7 @@ void Task::updateHook()
         //}
     }
 
-    if(_resetDepJoints.read(resetDepJoints) == RTT::NewData)
+    if(_reset_dep_joints.read(resetDepJoints) == RTT::NewData)
     {
         /*if((resetDepJoints != last_resetDepJoints)&&(resetDepJoints))
         {

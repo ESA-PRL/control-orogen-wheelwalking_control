@@ -63,7 +63,7 @@ task_context "Task" do
     input_port "joystick_commands", "controldev/RawCommand"
     input_port "joint_readings", "base/samples/Joints"
     input_port "kill_switch", "bool"
-    input_port "resetDepJoints", "bool"
+    input_port "reset_dep_joints", "bool"
 
     # An output port, i.e. an object to which the component pushes data so that
     # it is transmitted to other components' inputs
