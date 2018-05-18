@@ -1,5 +1,3 @@
-/* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
-
 #include "Task.hpp"
 #include <iostream>
 
@@ -30,10 +28,6 @@ Task::~Task()
 {
     delete wheelwalking_control;
 }
-
-/// The following lines are template definitions for the various state machine
-// hooks defined by Orocos::RTT. See Task.hpp for more detailed
-// documentation about them.
 
 bool Task::configureHook()
 {
@@ -105,37 +99,23 @@ void Task::updateHook()
 
     if(_kill_switch.read(kill_switch) == RTT::NewData)
     {
-        /*if (kill_switch != last_kill_switch)
+        if (kill_switch)
         {
-            last_kill_switch = kill_switch;*/
-            if (kill_switch)
-            {
-                wheelwalking_control->stopMotion();
-                std::cout << "WWCONTROL: kill switch engaged" << std::endl;
-            }
-            else
-            {
-                wheelwalking_control->startMotion();
-                std::cout << "WWCONTROL: kill switch disengaged" << std::endl;
-            }
+            wheelwalking_control->stopMotion();
+            std::cout << "WWCONTROL: kill switch engaged" << std::endl;
+        }
+        else
+        {
+            wheelwalking_control->startMotion();
+            std::cout << "WWCONTROL: kill switch disengaged" << std::endl;
+        }
         wheelwalking_control->setSpeed(0.02);
-            wheelwalking_control->setOffsetSpeed(0);
-            wheelwalking_control->setStepLength(0.06);
-        //}
+        wheelwalking_control->setOffsetSpeed(0);
+        wheelwalking_control->setStepLength(0.06);
     }
 
     if(_reset_dep_joints.read(resetDepJoints) == RTT::NewData)
     {
-        /*if((resetDepJoints != last_resetDepJoints)&&(resetDepJoints))
-        {
-            last_resetDepJoints = resetDepJoints;
-            wheelwalking_control->initJointConfiguration();
-            std::cout << "WWCONTROL: reset deployment joints" << std::endl;
-        }*/
-        /*else if (!resetDepJoints)
-        {
-            last_resetDepJoints = resetDepJoints;
-        }*/
         if(resetDepJoints)
         {
             wheelwalking_control->initJointConfiguration();
@@ -156,18 +136,8 @@ void Task::updateHook()
     wheelwalking_control->getJointCommands(position_commands, velocity_commands);
 
     if (position_commands != last_position_commands || velocity_commands != last_velocity_commands)
-//    if (differentCommands())
     {
-//        std::cout << "Wheel Walking Control: Update Hook: New command sent to joint dispatcher" << std::endl;
         base::commands::Joints joint_commands = assembleJointCommands(position_commands, velocity_commands);
-        /*std::cout << "Wheel Walking Control: Positions -> ";
-        for (uint i = 0; i<position_commands.size(); i++)
-            std::cout << position_commands[i] << " ";
-        std::cout  << std::endl;
-        std::cout << "Wheel Walking Control: Velocities -> ";
-        for (uint i = 0; i<velocity_commands.size(); i++)
-            std::cout << velocity_commands[i] << " ";
-        std::cout  << std::endl;*/
         _joint_commands.write(joint_commands);
         last_position_commands=position_commands;
         last_velocity_commands=velocity_commands;
@@ -179,8 +149,6 @@ bool Task::differentCommands()
     double epsilon = 0.01;
     for (int i=0;i<NUMBER_OF_ACTIVE_JOINTS;i++)
     {
-        //std::cout << "position " << i << ": " << position_commands[i] << " velocity " << i << ": " << velocity_commands[i] << " abs_dif: " << std::abs(position_commands[i]-last_position_commands[i]) << std::endl;
-        //std::cout << "last position " << i << ": " << last_position_commands[i] << " last velocity " << i << ": " << last_velocity_commands[i] << " abs_dif: " << std::abs(velocity_commands[i]-last_velocity_commands[i]) << std::endl;
         if ( (std::abs(position_commands[i]-last_position_commands[i])>epsilon) || (std::abs(velocity_commands[i]-last_velocity_commands[i])>epsilon) )
         {
             return true;
