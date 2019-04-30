@@ -54,11 +54,9 @@ tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
         std::vector<std::string> disabled_walking_joints;
 
         bool deadmans_switch;
-        bool resetDepJoints;
-        bool last_resetDepJoints;
         bool kill_switch;
-        bool last_kill_switch;
         bool discrete_speed_mode;
+        bool reset_dep_joints;
         int discrete_speed;
         int offset_speed;
         int step_length;

@@ -13,13 +13,13 @@ static const double MAX_STEP_LENGTH = 0.20d;
 static const double MIN_STEP_LENGTH = 0.02d;
 
 Task::Task(std::string const& name)
-    : TaskBase(name), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(3)
+    : TaskBase(name), deadmans_switch(true), kill_switch(true), reset_dep_joints(false), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(3)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
-    : TaskBase(name, engine), deadmans_switch(true), kill_switch(true), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(3)
+    : TaskBase(name, engine), deadmans_switch(true), kill_switch(true), reset_dep_joints(false), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(3)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
@@ -67,21 +67,33 @@ bool Task::configureHook()
 
     wheelwalking_control->setWalkingJointsStatus(walking_joints_status);
 
-    wheelwalking_control->selectMode(SIDE_BY_SIDE);
+    std::string initial_gait = _initial_gait.get();
+    WheelwalkingMode gait = AXLE_BY_AXLE;
 
-    std::cout << "Initial gait: SIDE_BY_SIDE" << std::endl;
+    if (initial_gait == "AXLE_BY_AXLE") { gait = AXLE_BY_AXLE; }
+    else if (initial_gait == "SIDE_BY_SIDE") { gait = SIDE_BY_SIDE; }
+    else if (initial_gait == "EVEN_ODD") { gait = EVEN_ODD; }
+    else if (initial_gait == "SINGLE_WHEEL") { gait = SINGLE_WHEEL; }
+    else if (initial_gait == "NORMAL_DRIVING") { gait = NORMAL_DRIVING; }
+
+    discrete_speed = _discrete_speed.get() / DISCRETE_SPEED_FACTOR;
+    offset_speed = _offset_speed.get() / OFFSET_SPEED_FACTOR;
+    step_length = _step_length.get() / STEP_LENGTH_FACTOR;
+
+    wheelwalking_control->selectMode(gait);
+    wheelwalking_control->setSpeed(discrete_speed * DISCRETE_SPEED_FACTOR);
+    wheelwalking_control->setOffsetSpeed(offset_speed * OFFSET_SPEED_FACTOR);
+    wheelwalking_control->setStepLength(step_length * STEP_LENGTH_FACTOR);
+
+    if (kill_switch)
+    	wheelwalking_control->stopMotion();
+
     std::cout << "Discrete speed mode " << (discrete_speed_mode ? "enabled." : "disabled.") << std::endl;
     std::cout << "Discrete speed: " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s" << std::endl;
     std::cout << "Offset speed: " << offset_speed * OFFSET_SPEED_FACTOR << " m/s" << std::endl;
     std::cout << "Step length: " << step_length * STEP_LENGTH_FACTOR << " m" << std::endl;
     std::cout << "Kill switch " << (kill_switch ? "engaged." : "disengaged.") << std::endl;
 
-    if (kill_switch)
-    	wheelwalking_control->stopMotion();
-
-    last_kill_switch = kill_switch;
-    last_resetDepJoints = false;
-    resetDepJoints = false;
     return true;
 }
 bool Task::startHook()
@@ -109,19 +121,13 @@ void Task::updateHook()
             wheelwalking_control->startMotion();
             std::cout << "WWCONTROL: kill switch disengaged" << std::endl;
         }
-        wheelwalking_control->setSpeed(0.02);
-        wheelwalking_control->setOffsetSpeed(0);
-        wheelwalking_control->setStepLength(0.06);
     }
 
-    if(_reset_dep_joints.read(resetDepJoints) == RTT::NewData)
+    if(_reset_dep_joints.read(reset_dep_joints) == RTT::NewData)
     {
-        if(resetDepJoints)
+        if(reset_dep_joints)
         {
             wheelwalking_control->initJointConfiguration();
-            wheelwalking_control->setSpeed(0.02);
-            wheelwalking_control->setOffsetSpeed(0);
-            wheelwalking_control->setStepLength(0.06);
         }
     }
 
