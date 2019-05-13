@@ -1,6 +1,8 @@
 #include "Task.hpp"
 #include <iostream>
 
+#include <base-logging/Logging.hpp>
+
 using namespace wheelwalking_control;
 using namespace exoter_kinematics;
 
@@ -88,11 +90,11 @@ bool Task::configureHook()
     if (kill_switch)
     	wheelwalking_control->stopMotion();
 
-    std::cout << "Discrete speed mode " << (discrete_speed_mode ? "enabled." : "disabled.") << std::endl;
-    std::cout << "Discrete speed: " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s" << std::endl;
-    std::cout << "Offset speed: " << offset_speed * OFFSET_SPEED_FACTOR << " m/s" << std::endl;
-    std::cout << "Step length: " << step_length * STEP_LENGTH_FACTOR << " m" << std::endl;
-    std::cout << "Kill switch " << (kill_switch ? "engaged." : "disengaged.") << std::endl;
+    LOG_DEBUG_S << "Discrete speed mode " << (discrete_speed_mode ? "enabled." : "disabled.");
+    LOG_DEBUG_S << "Discrete speed: " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s";
+    LOG_DEBUG_S << "Offset speed: " << offset_speed * OFFSET_SPEED_FACTOR << " m/s";
+    LOG_DEBUG_S << "Step length: " << step_length * STEP_LENGTH_FACTOR << " m";
+    LOG_DEBUG_S << "Kill switch " << (kill_switch ? "engaged." : "disengaged.");
 
     return true;
 }
@@ -114,12 +116,12 @@ void Task::updateHook()
         if (kill_switch)
         {
             wheelwalking_control->stopMotion();
-            std::cout << "WWCONTROL: kill switch engaged" << std::endl;
+            LOG_DEBUG_S << "kill switch engaged";
         }
         else
         {
             wheelwalking_control->startMotion();
-            std::cout << "WWCONTROL: kill switch disengaged" << std::endl;
+            LOG_DEBUG_S << "kill switch disengaged";
         }
     }
 
@@ -178,7 +180,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
 
 		wheelwalking_control->stopMotion();
 
-        std::cout << "Kill switch engaged." << std::endl;
+        LOG_DEBUG_S << "Kill switch engaged";
     }
     else if (joystick_commands.buttons[7] == 1 && last_button_values[7] == 0)    //BTN_TR (right bottom)
     {
@@ -186,7 +188,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
 
 		wheelwalking_control->startMotion();
 
-        std::cout << "Kill switch disengaged." << std::endl;
+        LOG_DEBUG_S << "Kill switch disengaged";
     }
 
     if (joystick_commands.buttons[11] == 1 && last_button_values[11] == 0)	//BTN_START (right push button)
@@ -223,7 +225,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         if ((step_length + 1) * STEP_LENGTH_FACTOR <= MAX_STEP_LENGTH)
         {
             step_length++;
-            std::cout << "Set step length to " << step_length * STEP_LENGTH_FACTOR << " m." << std::endl;
+            LOG_INFO_S << "Set step length to " << step_length * STEP_LENGTH_FACTOR << " m.";
         }
     }
     else if (joystick_commands.buttons[4] == 1 && last_button_values[4] == 0) //BTN_Y (left top)
@@ -231,7 +233,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         if ((step_length - 1) * STEP_LENGTH_FACTOR >= MIN_STEP_LENGTH)
         {
             step_length--;
-            std::cout << "Set step length to " << step_length * STEP_LENGTH_FACTOR << " m." << std::endl;
+            LOG_INFO_S << "Set step length to " << step_length * STEP_LENGTH_FACTOR << " m.";
         }
     }
 
@@ -240,7 +242,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         if ((discrete_speed + 1) * DISCRETE_SPEED_FACTOR <= MAX_SPEED)
         {
             discrete_speed++;
-            std::cout << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s." << std::endl;
+            LOG_INFO_S << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s.";
         }
     }
     else if (joystick_commands.axes[5] == -1 && last_axes_values[5] == 0 && discrete_speed_mode)     //ABS_HAT0Y (dpad)
@@ -248,7 +250,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         if ((discrete_speed - 1) * DISCRETE_SPEED_FACTOR >= -MAX_SPEED)
         {
             discrete_speed--;
-            std::cout << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s." << std::endl;
+            LOG_INFO_S << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s.";
         }
     }
 
@@ -257,7 +259,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         if ((offset_speed + 1) * OFFSET_SPEED_FACTOR <= MAX_OFFSET_SPEED)
         {
             offset_speed++;
-            std::cout << "Set offset speed to " << offset_speed * OFFSET_SPEED_FACTOR << " m/s." << std::endl;
+            LOG_INFO_S << "Set offset speed to " << offset_speed * OFFSET_SPEED_FACTOR << " m/s.";
         }
     }
     else if (joystick_commands.axes[4] == -1 && last_axes_values[4] == 0)     //ABS_HAT0X (dpad)
@@ -265,7 +267,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         if ((offset_speed - 1) * OFFSET_SPEED_FACTOR >= -MAX_OFFSET_SPEED)
         {
             offset_speed--;
-            std::cout << "Set offset speed to " << offset_speed * OFFSET_SPEED_FACTOR << " m/s." << std::endl;
+            LOG_INFO_S << "Set offset speed to " << offset_speed * OFFSET_SPEED_FACTOR << " m/s.";
         }
     }
 
@@ -275,13 +277,13 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         {
             discrete_speed_mode = true;
 	    discrete_speed = 0;
-            std::cout << "Switched to discrete walking speed mode." << std::endl;
-            std::cout << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s." << std::endl;
+            LOG_INFO_S << "Switched to discrete walking speed mode.";
+            LOG_INFO_S << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s.";
         }
         else
         {
             discrete_speed_mode = false;
-            std::cout << "Switched to continuous walking speed mode." << std::endl;
+            LOG_INFO_S << "Switched to continuous walking speed mode.";
         }
     }
 
@@ -312,7 +314,7 @@ void Task::evaluateJointReadings(const base::samples::Joints joint_readings)
     for (int i = 0; i < NUMBER_OF_PASSIVE_JOINTS + NUMBER_OF_ACTIVE_JOINTS; i++)
     {
         current_joint = joint_readings[joint_readings_names[i]];
-        //std::cout << "Joint: " << joint_readings_names[i] << " -> Position:  " << current_joint.position << std::endl;
+        //LOG_DEBUG_S << "Joint: " << joint_readings_names[i] << " -> Position:  " << current_joint.position;
 
         position_readings[i] = current_joint.hasPosition() ? current_joint.position : std::numeric_limits<double>::quiet_NaN();
         velocity_readings[i] = current_joint.hasSpeed() ? current_joint.speed : std::numeric_limits<double>::quiet_NaN();
