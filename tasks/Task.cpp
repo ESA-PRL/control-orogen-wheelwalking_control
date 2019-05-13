@@ -6,42 +6,52 @@
 using namespace wheelwalking_control;
 using namespace exoter_kinematics;
 
-static const double MAX_SPEED = 0.02d; // maximum walking body speed
-static const double DISCRETE_SPEED_FACTOR = 0.005d; // walking speed increment in m/s
-static const double OFFSET_SPEED_FACTOR = 0.005d; // offset speed increment in m/s
+static const double MAX_SPEED = 0.02d;               // maximum walking body speed
+static const double DISCRETE_SPEED_FACTOR = 0.005d;  // walking speed increment in m/s
+static const double OFFSET_SPEED_FACTOR = 0.005d;    // offset speed increment in m/s
 static const double MAX_OFFSET_SPEED = 0.02d;
-static const double STEP_LENGTH_FACTOR = 0.02d; // step length increment in m
+static const double STEP_LENGTH_FACTOR = 0.02d;  // step length increment in m
 static const double MAX_STEP_LENGTH = 0.20d;
 static const double MIN_STEP_LENGTH = 0.02d;
 
 Task::Task(std::string const& name)
-    : TaskBase(name), deadmans_switch(true), kill_switch(true), reset_dep_joints(false), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(3)
+    : TaskBase(name),
+      deadmans_switch(true),
+      kill_switch(true),
+      reset_dep_joints(false),
+      discrete_speed_mode(true),
+      discrete_speed(4),
+      offset_speed(0),
+      step_length(3)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
-    : TaskBase(name, engine), deadmans_switch(true), kill_switch(true), reset_dep_joints(false), discrete_speed_mode(true), discrete_speed(4), offset_speed(0), step_length(3)
+    : TaskBase(name, engine),
+      deadmans_switch(true),
+      kill_switch(true),
+      reset_dep_joints(false),
+      discrete_speed_mode(true),
+      discrete_speed(4),
+      offset_speed(0),
+      step_length(3)
 {
     wheelwalking_control = new ExoterWheelwalkingControl(0.07);
 }
 
-Task::~Task()
-{
-    delete wheelwalking_control;
-}
+Task::~Task() { delete wheelwalking_control; }
 
 bool Task::configureHook()
 {
-    if (! TaskBase::configureHook())
-        return false;
+    if (!TaskBase::configureHook()) return false;
 
     joint_commands_names = _joint_commands_names.get();
     joint_readings_names = _joint_readings_names.get();
-    position_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
-    velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
-    last_position_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
-    last_velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS,0.0d);
+    position_commands.assign(NUMBER_OF_ACTIVE_JOINTS, 0.0d);
+    velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS, 0.0d);
+    last_position_commands.assign(NUMBER_OF_ACTIVE_JOINTS, 0.0d);
+    last_velocity_commands.assign(NUMBER_OF_ACTIVE_JOINTS, 0.0d);
     first_iteration = true;
 
     disabled_walking_joints = _disabled_walking_joints.get();
@@ -72,11 +82,26 @@ bool Task::configureHook()
     std::string initial_gait = _initial_gait.get();
     WheelwalkingMode gait = AXLE_BY_AXLE;
 
-    if (initial_gait == "AXLE_BY_AXLE") { gait = AXLE_BY_AXLE; }
-    else if (initial_gait == "SIDE_BY_SIDE") { gait = SIDE_BY_SIDE; }
-    else if (initial_gait == "EVEN_ODD") { gait = EVEN_ODD; }
-    else if (initial_gait == "SINGLE_WHEEL") { gait = SINGLE_WHEEL; }
-    else if (initial_gait == "NORMAL_DRIVING") { gait = NORMAL_DRIVING; }
+    if (initial_gait == "AXLE_BY_AXLE")
+    {
+        gait = AXLE_BY_AXLE;
+    }
+    else if (initial_gait == "SIDE_BY_SIDE")
+    {
+        gait = SIDE_BY_SIDE;
+    }
+    else if (initial_gait == "EVEN_ODD")
+    {
+        gait = EVEN_ODD;
+    }
+    else if (initial_gait == "SINGLE_WHEEL")
+    {
+        gait = SINGLE_WHEEL;
+    }
+    else if (initial_gait == "NORMAL_DRIVING")
+    {
+        gait = NORMAL_DRIVING;
+    }
 
     discrete_speed = _discrete_speed.get() / DISCRETE_SPEED_FACTOR;
     offset_speed = _offset_speed.get() / OFFSET_SPEED_FACTOR;
@@ -87,8 +112,7 @@ bool Task::configureHook()
     wheelwalking_control->setOffsetSpeed(offset_speed * OFFSET_SPEED_FACTOR);
     wheelwalking_control->setStepLength(step_length * STEP_LENGTH_FACTOR);
 
-    if (kill_switch)
-    	wheelwalking_control->stopMotion();
+    if (kill_switch) wheelwalking_control->stopMotion();
 
     LOG_DEBUG_S << "Discrete speed mode " << (discrete_speed_mode ? "enabled." : "disabled.");
     LOG_DEBUG_S << "Discrete speed: " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s";
@@ -98,12 +122,7 @@ bool Task::configureHook()
 
     return true;
 }
-bool Task::startHook()
-{
-    if (! TaskBase::startHook())
-        return false;
-   return true;
-}
+
 void Task::updateHook()
 {
     TaskBase::updateHook();
@@ -111,7 +130,7 @@ void Task::updateHook()
     controldev::RawCommand joystick_commands;
     base::samples::Joints joint_readings;
 
-    if(_kill_switch.read(kill_switch) == RTT::NewData)
+    if (_kill_switch.read(kill_switch) == RTT::NewData)
     {
         if (kill_switch)
         {
@@ -125,9 +144,9 @@ void Task::updateHook()
         }
     }
 
-    if(_reset_dep_joints.read(reset_dep_joints) == RTT::NewData)
+    if (_reset_dep_joints.read(reset_dep_joints) == RTT::NewData)
     {
-        if(reset_dep_joints)
+        if (reset_dep_joints)
         {
             wheelwalking_control->initJointConfiguration();
         }
@@ -136,8 +155,7 @@ void Task::updateHook()
     if (_joystick_commands.read(joystick_commands) == RTT::NewData)
         evaluateJoystickCommands(joystick_commands);
 
-    if (_joint_readings.read(joint_readings) == RTT::NewData)
-        evaluateJointReadings(joint_readings);
+    if (_joint_readings.read(joint_readings) == RTT::NewData) evaluateJointReadings(joint_readings);
 
     std::vector<double> position_commands;
     std::vector<double> velocity_commands;
@@ -145,19 +163,21 @@ void Task::updateHook()
 
     if (position_commands != last_position_commands || velocity_commands != last_velocity_commands)
     {
-        base::commands::Joints joint_commands = assembleJointCommands(position_commands, velocity_commands);
+        base::commands::Joints joint_commands =
+            assembleJointCommands(position_commands, velocity_commands);
         _joint_commands.write(joint_commands);
-        last_position_commands=position_commands;
-        last_velocity_commands=velocity_commands;
+        last_position_commands = position_commands;
+        last_velocity_commands = velocity_commands;
     }
 }
 
 bool Task::differentCommands()
 {
     double epsilon = 0.01;
-    for (int i=0;i<NUMBER_OF_ACTIVE_JOINTS;i++)
+    for (int i = 0; i < NUMBER_OF_ACTIVE_JOINTS; i++)
     {
-        if ( (std::abs(position_commands[i]-last_position_commands[i])>epsilon) || (std::abs(velocity_commands[i]-last_velocity_commands[i])>epsilon) )
+        if ((std::abs(position_commands[i] - last_position_commands[i]) > epsilon)
+            || (std::abs(velocity_commands[i] - last_velocity_commands[i]) > epsilon))
         {
             return true;
         }
@@ -174,53 +194,55 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         first_iteration = false;
     }
 
-    if (joystick_commands.buttons[6] == 1 && last_button_values[6] == 0)    //BTN_TL (left bottom)
+    if (joystick_commands.buttons[6] == 1 && last_button_values[6] == 0)  // BTN_TL (left bottom)
     {
         kill_switch = true;
 
-		wheelwalking_control->stopMotion();
+        wheelwalking_control->stopMotion();
 
         LOG_DEBUG_S << "Kill switch engaged";
     }
-    else if (joystick_commands.buttons[7] == 1 && last_button_values[7] == 0)    //BTN_TR (right bottom)
+    else if (joystick_commands.buttons[7] == 1
+             && last_button_values[7] == 0)  // BTN_TR (right bottom)
     {
         kill_switch = false;
 
-		wheelwalking_control->startMotion();
+        wheelwalking_control->startMotion();
 
         LOG_DEBUG_S << "Kill switch disengaged";
     }
 
-    if (joystick_commands.buttons[11] == 1 && last_button_values[11] == 0)	//BTN_START (right push button)
+    if (joystick_commands.buttons[11] == 1
+        && last_button_values[11] == 0)  // BTN_START (right push button)
     {
-    	wheelwalking_control->selectNextGait();
+        wheelwalking_control->selectNextGait();
     }
-    else if (joystick_commands.buttons[0] == 1 && last_button_values[0] == 0) //BTN_A (blue)
+    else if (joystick_commands.buttons[0] == 1 && last_button_values[0] == 0)  // BTN_A (blue)
     {
-		wheelwalking_control->selectMode(0);
+        wheelwalking_control->selectMode(0);
     }
-    else if (joystick_commands.buttons[1] == 1 && last_button_values[1] == 0) //BTN_B (green)
+    else if (joystick_commands.buttons[1] == 1 && last_button_values[1] == 0)  // BTN_B (green)
     {
-		wheelwalking_control->selectMode(1);
+        wheelwalking_control->selectMode(1);
     }
-    else if (joystick_commands.buttons[2] == 1 && last_button_values[2] == 0) //BTN_C (red)
+    else if (joystick_commands.buttons[2] == 1 && last_button_values[2] == 0)  // BTN_C (red)
     {
-		wheelwalking_control->selectMode(2);
+        wheelwalking_control->selectMode(2);
     }
-    else if (joystick_commands.buttons[3] == 1 && last_button_values[3] == 0) //BTN_X (yellow)
+    else if (joystick_commands.buttons[3] == 1 && last_button_values[3] == 0)  // BTN_X (yellow)
     {
-		wheelwalking_control->selectMode(3);
+        wheelwalking_control->selectMode(3);
     }
-    else if (joystick_commands.buttons[9] == 1 && last_button_values[9] == 0) //BTN_TR2 (start)
+    else if (joystick_commands.buttons[9] == 1 && last_button_values[9] == 0)  // BTN_TR2 (start)
     {
-		wheelwalking_control->selectMode(4);
+        wheelwalking_control->selectMode(4);
     }
-	else if (joystick_commands.buttons[8] == 1 && last_button_values[8] == 0)	//BTN_TL2 (back)
-	{
-		wheelwalking_control->initJointConfiguration();
-	}
+    else if (joystick_commands.buttons[8] == 1 && last_button_values[8] == 0)  // BTN_TL2 (back)
+    {
+        wheelwalking_control->initJointConfiguration();
+    }
 
-    if (joystick_commands.buttons[5] == 1 && last_button_values[5] == 0) //BTN_Z (right top)
+    if (joystick_commands.buttons[5] == 1 && last_button_values[5] == 0)  // BTN_Z (right top)
     {
         if ((step_length + 1) * STEP_LENGTH_FACTOR <= MAX_STEP_LENGTH)
         {
@@ -228,7 +250,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
             LOG_INFO_S << "Set step length to " << step_length * STEP_LENGTH_FACTOR << " m.";
         }
     }
-    else if (joystick_commands.buttons[4] == 1 && last_button_values[4] == 0) //BTN_Y (left top)
+    else if (joystick_commands.buttons[4] == 1 && last_button_values[4] == 0)  // BTN_Y (left top)
     {
         if ((step_length - 1) * STEP_LENGTH_FACTOR >= MIN_STEP_LENGTH)
         {
@@ -237,24 +259,28 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         }
     }
 
-    if (joystick_commands.axes[5] == 1 && last_axes_values[5] == 0 && discrete_speed_mode)     //ABS_HAT0Y (dpad)
+    if (joystick_commands.axes[5] == 1 && last_axes_values[5] == 0
+        && discrete_speed_mode)  // ABS_HAT0Y (dpad)
     {
         if ((discrete_speed + 1) * DISCRETE_SPEED_FACTOR <= MAX_SPEED)
         {
             discrete_speed++;
-            LOG_INFO_S << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s.";
+            LOG_INFO_S << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR
+                       << " m/s.";
         }
     }
-    else if (joystick_commands.axes[5] == -1 && last_axes_values[5] == 0 && discrete_speed_mode)     //ABS_HAT0Y (dpad)
+    else if (joystick_commands.axes[5] == -1 && last_axes_values[5] == 0
+             && discrete_speed_mode)  // ABS_HAT0Y (dpad)
     {
         if ((discrete_speed - 1) * DISCRETE_SPEED_FACTOR >= -MAX_SPEED)
         {
             discrete_speed--;
-            LOG_INFO_S << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s.";
+            LOG_INFO_S << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR
+                       << " m/s.";
         }
     }
 
-    if (joystick_commands.axes[4] == 1 && last_axes_values[4] == 0)     //ABS_HAT0X (dpad)
+    if (joystick_commands.axes[4] == 1 && last_axes_values[4] == 0)  // ABS_HAT0X (dpad)
     {
         if ((offset_speed + 1) * OFFSET_SPEED_FACTOR <= MAX_OFFSET_SPEED)
         {
@@ -262,7 +288,7 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
             LOG_INFO_S << "Set offset speed to " << offset_speed * OFFSET_SPEED_FACTOR << " m/s.";
         }
     }
-    else if (joystick_commands.axes[4] == -1 && last_axes_values[4] == 0)     //ABS_HAT0X (dpad)
+    else if (joystick_commands.axes[4] == -1 && last_axes_values[4] == 0)  // ABS_HAT0X (dpad)
     {
         if ((offset_speed - 1) * OFFSET_SPEED_FACTOR >= -MAX_OFFSET_SPEED)
         {
@@ -271,14 +297,16 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
         }
     }
 
-    if (joystick_commands.buttons[10] == 1 && last_button_values[10] == 0)    //BTN_SELECT (left push button)
+    if (joystick_commands.buttons[10] == 1
+        && last_button_values[10] == 0)  // BTN_SELECT (left push button)
     {
         if (!discrete_speed_mode)
         {
             discrete_speed_mode = true;
-	    discrete_speed = 0;
+            discrete_speed = 0;
             LOG_INFO_S << "Switched to discrete walking speed mode.";
-            LOG_INFO_S << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR << " m/s.";
+            LOG_INFO_S << "Set walking speed to " << discrete_speed * DISCRETE_SPEED_FACTOR
+                       << " m/s.";
         }
         else
         {
@@ -290,7 +318,9 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
     if (discrete_speed_mode)
         wheelwalking_control->setSpeed(discrete_speed * DISCRETE_SPEED_FACTOR);
     else
-        wheelwalking_control->setSpeed(joystick_commands.axes[1] * MAX_SPEED);   //ABS_Y (left analog) - sign might have to be switched!!
+        wheelwalking_control->setSpeed(
+            joystick_commands.axes[1]
+            * MAX_SPEED);  // ABS_Y (left analog) - sign might have to be switched!!
 
     wheelwalking_control->setOffsetSpeed(offset_speed * OFFSET_SPEED_FACTOR);
     wheelwalking_control->setStepLength(step_length * STEP_LENGTH_FACTOR);
@@ -301,7 +331,10 @@ void Task::evaluateJoystickCommands(const controldev::RawCommand joystick_comman
 
 void Task::evaluateJointReadings(const base::samples::Joints joint_readings)
 {
-    // Joint order in position_readings & velocity_readings: [left_passive, right_passive, rear_passive, fl_walking, fr_walking, ml_walking, mr_walking, rl_walking, rr_walking, fl_steer, fr_steer, rl_steer, rr_steer, fl_drive, fr_drive, ml_drive, mr_drive, rl_drive, rr_drive]
+    // Joint order in position_readings & velocity_readings: [left_passive, right_passive,
+    // rear_passive, fl_walking, fr_walking, ml_walking, mr_walking, rl_walking, rr_walking,
+    // fl_steer, fr_steer, rl_steer, rr_steer, fl_drive, fr_drive, ml_drive, mr_drive, rl_drive,
+    // rr_drive]
 
     std::vector<double> position_readings;
     std::vector<double> velocity_readings;
@@ -314,18 +347,26 @@ void Task::evaluateJointReadings(const base::samples::Joints joint_readings)
     for (int i = 0; i < NUMBER_OF_PASSIVE_JOINTS + NUMBER_OF_ACTIVE_JOINTS; i++)
     {
         current_joint = joint_readings[joint_readings_names[i]];
-        //LOG_DEBUG_S << "Joint: " << joint_readings_names[i] << " -> Position:  " << current_joint.position;
+        // LOG_DEBUG_S << "Joint: " << joint_readings_names[i] << " -> Position:  " <<
+        // current_joint.position;
 
-        position_readings[i] = current_joint.hasPosition() ? current_joint.position : std::numeric_limits<double>::quiet_NaN();
-        velocity_readings[i] = current_joint.hasSpeed() ? current_joint.speed : std::numeric_limits<double>::quiet_NaN();
+        position_readings[i] = current_joint.hasPosition()
+                                   ? current_joint.position
+                                   : std::numeric_limits<double>::quiet_NaN();
+        velocity_readings[i] = current_joint.hasSpeed() ? current_joint.speed
+                                                        : std::numeric_limits<double>::quiet_NaN();
     }
 
     wheelwalking_control->setNewJointReadings(position_readings, velocity_readings);
 }
 
-base::commands::Joints Task::assembleJointCommands(const std::vector<double> position_commands, const std::vector<double> velocity_commands)
+base::commands::Joints Task::assembleJointCommands(const std::vector<double> position_commands,
+                                                   const std::vector<double> velocity_commands)
 {
-    // Joint order in position_commands & velocity_commands: [WHEEL_WALK_FL, WHEEL_WALK_FR, WHEEL_WALK_CL, WHEEL_WALK_CR, WHEEL_WALK_BL, WHEEL_WALK_BR, WHEEL_STEER_FL, WHEEL_STEER_FR, WHEEL_STEER_BL, WHEEL_STEER_BR, WHEEL_DRIVE_FL, WHEEL_DRIVE_FR, WHEEL_DRIVE_CL, WHEEL_DRIVE_CR, WHEEL_DRIVE_BL, WHEEL_DRIVE_BR]
+    // Joint order in position_commands & velocity_commands: [WHEEL_WALK_FL, WHEEL_WALK_FR,
+    // WHEEL_WALK_CL, WHEEL_WALK_CR, WHEEL_WALK_BL, WHEEL_WALK_BR, WHEEL_STEER_FL, WHEEL_STEER_FR,
+    // WHEEL_STEER_BL, WHEEL_STEER_BR, WHEEL_DRIVE_FL, WHEEL_DRIVE_FR, WHEEL_DRIVE_CL,
+    // WHEEL_DRIVE_CR, WHEEL_DRIVE_BL, WHEEL_DRIVE_BR]
 
     base::commands::Joints joint_commands;
     joint_commands.resize(joint_commands_names.size());
@@ -340,11 +381,15 @@ base::commands::Joints Task::assembleJointCommands(const std::vector<double> pos
         current_position_command = position_commands[i];
         current_velocity_command = velocity_commands[i];
 
-        if (!(current_position_command != current_position_command))    // Only set value if position_command is not NAN.
-            joint_commands.elements[NUMBER_OF_WHEELS + NUMBER_OF_STEERABLE_WHEELS + i].position = current_position_command;
+        if (!(current_position_command
+              != current_position_command))  // Only set value if position_command is not NAN.
+            joint_commands.elements[NUMBER_OF_WHEELS + NUMBER_OF_STEERABLE_WHEELS + i].position =
+                current_position_command;
 
-        if (!(current_velocity_command != current_velocity_command))    // Only set value if velocity_command is not NAN.
-            joint_commands.elements[NUMBER_OF_WHEELS + NUMBER_OF_STEERABLE_WHEELS + i].speed = current_velocity_command;
+        if (!(current_velocity_command
+              != current_velocity_command))  // Only set value if velocity_command is not NAN.
+            joint_commands.elements[NUMBER_OF_WHEELS + NUMBER_OF_STEERABLE_WHEELS + i].speed =
+                current_velocity_command;
     }
 
     for (int i = 0; i < NUMBER_OF_STEERABLE_WHEELS; i++)
@@ -352,36 +397,34 @@ base::commands::Joints Task::assembleJointCommands(const std::vector<double> pos
         current_position_command = position_commands[NUMBER_OF_WALKING_WHEELS + i];
         current_velocity_command = velocity_commands[NUMBER_OF_WALKING_WHEELS + i];
 
-        if (!(current_position_command != current_position_command))    // Only set value if position_command is not NAN.
+        if (!(current_position_command
+              != current_position_command))  // Only set value if position_command is not NAN.
             joint_commands.elements[NUMBER_OF_WHEELS + i].position = current_position_command;
 
-        if (!(current_velocity_command != current_velocity_command))    // Only set value if velocity_command is not NAN.
+        if (!(current_velocity_command
+              != current_velocity_command))  // Only set value if velocity_command is not NAN.
             joint_commands.elements[NUMBER_OF_WHEELS + i].speed = current_velocity_command;
     }
 
     for (int i = 0; i < NUMBER_OF_WHEELS; i++)
     {
-        current_position_command = position_commands[NUMBER_OF_WALKING_WHEELS + NUMBER_OF_STEERABLE_WHEELS + i];
-        current_velocity_command = velocity_commands[NUMBER_OF_WALKING_WHEELS + NUMBER_OF_STEERABLE_WHEELS + i];
+        current_position_command =
+            position_commands[NUMBER_OF_WALKING_WHEELS + NUMBER_OF_STEERABLE_WHEELS + i];
+        current_velocity_command =
+            velocity_commands[NUMBER_OF_WALKING_WHEELS + NUMBER_OF_STEERABLE_WHEELS + i];
 
-        if (!(current_position_command != current_position_command))    // Only set value if position_command is not NAN.
+        if (!(current_position_command
+              != current_position_command))  // Only set value if position_command is not NAN.
             joint_commands.elements[i].position = current_position_command;
-        if (!(current_velocity_command != current_velocity_command))    // Only set value if velocity_command is not NAN.
+        if (!(current_velocity_command
+              != current_velocity_command))  // Only set value if velocity_command is not NAN.
             joint_commands.elements[i].speed = current_velocity_command;
     }
 
     return joint_commands;
 }
 
-void Task::errorHook()
-{
-    TaskBase::errorHook();
-}
-void Task::stopHook()
-{
-    TaskBase::stopHook();
-}
-void Task::cleanupHook()
-{
-    TaskBase::cleanupHook();
-}
+bool Task::startHook() { return TaskBase::startHook(); }
+void Task::errorHook() { TaskBase::errorHook(); }
+void Task::stopHook() { TaskBase::stopHook(); }
+void Task::cleanupHook() { TaskBase::cleanupHook(); }

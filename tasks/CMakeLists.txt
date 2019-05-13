@@ -1,5 +1,3 @@
-# Generated from orogen/lib/orogen/templates/tasks/CMakeLists.txt
-
 include(wheelwalking_controlTaskLib)
 ADD_LIBRARY(${WHEELWALKING_CONTROL_TASKLIB_NAME} SHARED 
     ${WHEELWALKING_CONTROL_TASKLIB_SOURCES})

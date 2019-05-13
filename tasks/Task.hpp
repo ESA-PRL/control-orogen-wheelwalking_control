@@ -1,163 +1,82 @@
-/* Generated from orogen/lib/orogen/templates/tasks/Task.hpp */
+#pragma once
 
-#ifndef WHEELWALKING_CONTROL_TASK_TASK_HPP
-#define WHEELWALKING_CONTROL_TASK_TASK_HPP
-
-#include "wheelwalking_control/TaskBase.hpp"
-#include "exoter_kinematics/ExoterWheelwalkingTypes.hpp"
 #include "exoter_kinematics/ExoterWheelwalkingControl.hpp"
+#include "exoter_kinematics/ExoterWheelwalkingTypes.hpp"
+#include "wheelwalking_control/TaskBase.hpp"
 
-/** Base types **/
-#include <base/samples/Joints.hpp>
 #include <base/commands/Joints.hpp>
+#include <base/samples/Joints.hpp>
 
-/** STD **/
 #include <vector>
 
 using namespace exoter_kinematics;
 
-namespace wheelwalking_control {
+namespace wheelwalking_control
+{
 
-    /*! \class Task
-     * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
-     * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
-     * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
-     * Declare a new task context (i.e., a component)
+class Task : public TaskBase
+{
+    friend class TaskBase;
 
-The corresponding C++ class can be edited in tasks/Task.hpp and
-tasks/Task.cpp, and will be put in the wheelwalking_control namespace.
-     * \details
-     * The name of a TaskContext is primarily defined via:
-     \verbatim
-     deployment 'deployment_name'
-         task('custom_task_name','wheelwalking_control::Task')
-     end
-     \endverbatim
-     *  It can be dynamically adapted when the deployment is called with a prefix argument.
+  protected:
+    ExoterWheelwalkingControl* wheelwalking_control;
+
+  private:
+    bool first_iteration;
+
+    std::vector<int> last_button_values;
+    std::vector<double> last_axes_values;
+    std::vector<double> position_commands;
+    std::vector<double> velocity_commands;
+    std::vector<double> last_position_commands;
+    std::vector<double> last_velocity_commands;
+    std::vector<std::string> joint_commands_names;
+    std::vector<std::string> joint_readings_names;
+    std::vector<std::string> disabled_walking_joints;
+
+    bool deadmans_switch;
+    bool kill_switch;
+    bool reset_dep_joints;
+    bool discrete_speed_mode;
+    int discrete_speed;
+    int offset_speed;
+    int step_length;
+
+    /** Maps the button presses and joystick movements to the corresponding function calls in the
+     * egress control and realizes the intended human interface behaviour.
+     * \param joystick_commands Raw commands from joystick containing axes and button values.
      */
-    class Task : public TaskBase
-    {
-	friend class TaskBase;
-    protected:
-        ExoterWheelwalkingControl* wheelwalking_control;
-    private:
-        bool first_iteration;
+    void evaluateJoystickCommands(const controldev::RawCommand joystick_commands);
 
-        std::vector<int> last_button_values;
-        std::vector<double> last_axes_values;
-        std::vector<double> position_commands;
-        std::vector<double> velocity_commands;
-        std::vector<double> last_position_commands;
-        std::vector<double> last_velocity_commands;
-        std::vector<std::string> joint_commands_names;
-        std::vector<std::string> joint_readings_names;
-        std::vector<std::string> disabled_walking_joints;
+    /** Maps the input joint readings to the order that is expected by egress control.
+     * \param joint_readings Joint readings from the joint dispatcher.
+     */
+    void evaluateJointReadings(const base::samples::Joints joint_readings);
 
-        bool deadmans_switch;
-        bool kill_switch;
-        bool discrete_speed_mode;
-        bool reset_dep_joints;
-        int discrete_speed;
-        int offset_speed;
-        int step_length;
+    /** Assembles the output joint command vector from the calculated joint positions and
+     * velocities.
+     * \param position_commands Position commands computed by egress control.
+     * \param velocity_commands Velocity commands computed by egress control.
+     */
+    base::commands::Joints assembleJointCommands(const std::vector<double> position_commands,
+                                                 const std::vector<double> velocity_commands);
 
-        /** Maps the button presses and joystick movements to the corresponding function calls in the egress control and realizes the intended human interface behaviour.
-         * \param joystick_commands Raw commands from joystick containing axes and button values.
-         */
-        void evaluateJoystickCommands(const controldev::RawCommand joystick_commands);
+    /** Compares the last vector commands with the new vector of commands within a range.
+    * \return boolean value of the comparison. True if any command in the vector differs from the
+    * last value more than a given range.
+    */
+    bool differentCommands();
 
-        /** Maps the input joint readings to the order that is expected by egress control.
-         * \param joint_readings Joint readings from the joint dispatcher.
-         */
-        void evaluateJointReadings(const base::samples::Joints joint_readings);
+  public:
+    Task(std::string const& name = "wheelwalking_control::Task");
+    Task(std::string const& name, RTT::ExecutionEngine* engine);
+    ~Task();
 
-        /** Assembles the output joint command vector from the calculated joint positions and velocities.
-         * \param position_commands Position commands computed by egress control.
-         * \param velocity_commands Velocity commands computed by egress control.
-         */
-        base::commands::Joints assembleJointCommands(const std::vector<double> position_commands, const std::vector<double> velocity_commands);
-
-         /** Compares the last vector commands with the new vector of commands within a range.
-         * \return boolean value of the comparison. True if any command in the vector differs from the last value more than a given range.
-         */
-        bool differentCommands();
-
-    public:
-        /** TaskContext constructor for Task
-         * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
-         * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
-         */
-        Task(std::string const& name = "wheelwalking_control::Task");
-
-        /** TaskContext constructor for Task
-         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
-         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
-         *
-         */
-        Task(std::string const& name, RTT::ExecutionEngine* engine);
-
-        /** Default deconstructor of Task
-         */
-	~Task();
-
-        /** This hook is called by Orocos when the state machine transitions
-         * from PreOperational to Stopped. If it returns false, then the
-         * component will stay in PreOperational. Otherwise, it goes into
-         * Stopped.
-         *
-         * It is meaningful only if the #needs_configuration has been specified
-         * in the task context definition with (for example):
-         \verbatim
-         task_context "TaskName" do
-           needs_configuration
-           ...
-         end
-         \endverbatim
-         */
-        bool configureHook();
-
-        /** This hook is called by Orocos when the state machine transitions
-         * from Stopped to Running. If it returns false, then the component will
-         * stay in Stopped. Otherwise, it goes into Running and updateHook()
-         * will be called.
-         */
-        bool startHook();
-
-        /** This hook is called by Orocos when the component is in the Running
-         * state, at each activity step. Here, the activity gives the "ticks"
-         * when the hook should be called.
-         *
-         * The error(), exception() and fatal() calls, when called in this hook,
-         * allow to get into the associated RunTimeError, Exception and
-         * FatalError states.
-         *
-         * In the first case, updateHook() is still called, and recover() allows
-         * you to go back into the Running state.  In the second case, the
-         * errorHook() will be called instead of updateHook(). In Exception, the
-         * component is stopped and recover() needs to be called before starting
-         * it again. Finally, FatalError cannot be recovered.
-         */
-        void updateHook();
-
-        /** This hook is called by Orocos when the component is in the
-         * RunTimeError state, at each activity step. See the discussion in
-         * updateHook() about triggering options.
-         *
-         * Call recover() to go back in the Runtime state.
-         */
-        void errorHook();
-
-        /** This hook is called by Orocos when the state machine transitions
-         * from Running to Stopped after stop() has been called.
-         */
-        void stopHook();
-
-        /** This hook is called by Orocos when the state machine transitions
-         * from Stopped to PreOperational, requiring the call to configureHook()
-         * before calling start() again.
-         */
-        void cleanupHook();
-    };
+    bool configureHook();
+    bool startHook();
+    void updateHook();
+    void errorHook();
+    void stopHook();
+    void cleanupHook();
+};
 }
-
-#endif
