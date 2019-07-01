@@ -15,7 +15,8 @@
   <depend package="dummy-dependency-n" />
   -->
   <depend package="exoter/exoter_kinematics" />
-  <depend package="drivers/platform_driver" />
+  <depend package="drivers/platform_driver_pcan" optional="1"/>
+  <depend package="drivers/platform_driver_ethercat" optional="1"/>
   <depend package="drivers/orogen/controldev" />
   <depend package="base/orogen/types" />
 </package>
